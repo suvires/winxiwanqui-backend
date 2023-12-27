@@ -26,6 +26,10 @@ if (process.env.NODE_ENV === 'development') {
   server = http.createServer(app)
 }
 
+app.get('/', (req, res) => {
+  return 'Runs!'
+})
+
 const io = socketIo(server, {
   cors: {
     origin: process.env.APP_URL,
