@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --env-file .env.local server.js",
-    "prod": "node --env-file .env server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
