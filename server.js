@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.get('/', (req, res) => {
-  return 'Runs!'
+  res.send('Runs!')
 })
 
 const io = socketIo(server, {
