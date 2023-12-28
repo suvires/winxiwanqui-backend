@@ -53,21 +53,6 @@ app.post('/avatars', (req, res) => {
   }
 })
 
-app.put('/avatars/:avatarId', (req, res) => {
-  const avatarId = String(req.params.avatarId)
-  const newPosition = req.body.position
-  const avatarIndex = avatars.findIndex((avatar) => avatar.id === avatarId)
-
-  if (avatarIndex === -1) {
-    return res.status(404).json({ message: 'Avatar not found' })
-  }
-
-  avatars[avatarIndex].position = newPosition
-  res.json('Avatar moved')
-
-  io.emit('avatarMoved', avatars[avatarIndex])
-})
-
 app.get('/avatars', (req, res) => {
   res.json(avatars)
 })
@@ -82,6 +67,7 @@ io.on('connection', (socket) => {
     const avatarIndex = avatars.findIndex((avatar) => avatar.id === userId)
     if (avatarIndex !== -1) {
       avatars[avatarIndex].position = position
+      console.log(avatars[avatarIndex])
       io.emit('avatarMoved', avatars[avatarIndex])
     }
   })
