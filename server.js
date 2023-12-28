@@ -86,6 +86,10 @@ io.on('connection', (socket) => {
     }
   })
 
+  socket.on('sendMessage', message => {
+    io.emit('messageReceived', message)
+  })
+
   socket.on('disconnect', () => {
     if (socket.userId) {
       const avatarIndex = avatars.findIndex((avatar) => avatar.id === socket.userId)
