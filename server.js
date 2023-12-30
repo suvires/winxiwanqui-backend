@@ -5,10 +5,12 @@ const cors = require('cors')
 const socketIo = require('socket.io')
 const bodyParser = require('body-parser')
 
+const players = []
+
 app.use(
   cors({
     origin: process.env.APP_URL,
-    methods: ['GET', 'POST', 'PUT'],
+    methods: ['GET'],
     credentials: true
   }),
   bodyParser.json()
@@ -28,7 +30,11 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.get('/', (req, res) => {
-  res.send('Runs!')
+  res.send('Winxiwanqui server')
+})
+
+app.get('/players', (req, res) => {
+  res.json(players)
 })
 
 const io = socketIo(server, {
@@ -39,36 +45,28 @@ const io = socketIo(server, {
   }
 })
 
-const avatars = []
-
-app.post('/avatars', (req, res) => {
-  const { avatar } = req.body
-  const avatarIndex = avatars.findIndex((item) => item.id === avatar.id)
-  if (avatarIndex === -1) {
-    avatars.push(avatar)
-    res.status(200).json('Avatar created')
-    io.emit('avatarCreated', avatar)
-  } else {
-    res.status(409).json('Avatar already exists')
-  }
-})
-
-app.get('/avatars', (req, res) => {
-  res.json(avatars)
-})
-
 io.on('connection', (socket) => {
-  socket.on('setUserId', (userId) => {
-    socket.userId = userId
+  socket.on('createPlayer', ({ userId, characterSprite, positionX, positionY }) => {
+    const playerExists = players.some(p => p.userId === userId)
+    if (!playerExists) {
+      const player = {}
+      player.userId = userId
+      player.positionX = positionX
+      player.positionY = positionY
+      player.characterSprite = characterSprite
+      socket.player = player
+      players.push(player)
+      io.emit('playerCreated', { userId, characterSprite, positionX, positionY })
+    }
   })
 
-  socket.on('moveAvatar', (data) => {
-    const { userId, position } = data
-    const avatarIndex = avatars.findIndex((avatar) => avatar.id === userId)
-    if (avatarIndex !== -1) {
-      avatars[avatarIndex].position = position
-      console.log(avatars[avatarIndex])
-      io.emit('avatarMoved', avatars[avatarIndex])
+  socket.on('movePlayer', ({ userId, positionX, positionY, lastDirection }) => {
+    const player = players.find((p) => p.userId === userId)
+    if (player) {
+      player.positionX = positionX
+      player.positionY = positionY
+      player.lastDirection = lastDirection
+      io.emit('playerMoved', { userId, positionX, positionY })
     }
   })
 
@@ -77,11 +75,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    if (socket.userId) {
-      const avatarIndex = avatars.findIndex((avatar) => avatar.id === socket.userId)
-      if (avatarIndex !== -1) {
-        avatars.splice(avatarIndex, 1)
-        io.emit('avatarRemoved', socket.userId)
+    if (socket.player && socket.player.userId) {
+      const playerIndex = players.findIndex((p) => p.userId === socket.player.userId)
+      if (playerIndex !== -1) {
+        players.splice(playerIndex, 1)
+        io.emit('playerDisconnected', socket.player.userId)
       }
     }
   })
